@@ -1,0 +1,1160 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数独パズル</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(145deg, #fff5f8, #ffeff5);
+            min-height: 100vh;
+        }
+
+        .screen {
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* ========== 難易度選択画面 ========== */
+        .difficulty-container {
+            background: linear-gradient(145deg, #fff5f8, #ffeff5);
+            border-radius: 30px;
+            padding: 40px;
+            box-shadow: 20px 20px 60px #f0dce5, -20px -20px 60px #ffffff;
+            max-width: 500px;
+            width: 100%;
+        }
+
+        .title-area {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .icon {
+            font-size: 60px;
+            margin-bottom: 15px;
+        }
+
+        .title-area h1 {
+            font-size: 32px;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            font-size: 16px;
+            color: #666;
+        }
+
+        .difficulty-buttons {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+
+        .difficulty-btn {
+            padding: 35px 20px;
+            border: none;
+            border-radius: 20px;
+            font-size: 24px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 8px 8px 16px rgba(163, 177, 198, 0.6), -8px -8px 16px rgba(255, 255, 255, 0.5);
+        }
+
+        .difficulty-btn:hover {
+            box-shadow: 4px 4px 8px rgba(163, 177, 198, 0.6), -4px -4px 8px rgba(255, 255, 255, 0.5);
+        }
+
+        .difficulty-btn:active {
+            box-shadow: inset 4px 4px 8px rgba(163, 177, 198, 0.6), inset -4px -4px 8px rgba(255, 255, 255, 0.5);
+        }
+
+        .difficulty-btn.beginner {
+            background: linear-gradient(145deg, #a8e6cf, #7cd9b8);
+            color: #2d6a4f;
+        }
+
+        .difficulty-btn.easy {
+            background: linear-gradient(145deg, #a8daff, #7cc8ff);
+            color: #1565c0;
+        }
+
+        .difficulty-btn.medium {
+            background: linear-gradient(145deg, #e1bee7, #ce93d8);
+            color: #6a1b9a;
+        }
+
+        .difficulty-btn.hard {
+            background: linear-gradient(145deg, #ffb3ba, #ff8a8a);
+            color: #c62828;
+        }
+
+        /* ========== ゲーム画面 ========== */
+        .game-container {
+            background: linear-gradient(145deg, #ffffff, #f0f0f5);
+            border-radius: 30px;
+            padding: 20px;
+            max-width: 500px;
+            width: 100%;
+            box-shadow: 20px 20px 60px #d1d1d6, -20px -20px 60px #ffffff;
+        }
+
+        .game-header {
+            margin-bottom: 20px;
+        }
+
+        .icon-title {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .icon-small {
+            font-size: 32px;
+        }
+
+        .game-header h1 {
+            font-size: 28px;
+            color: #333;
+        }
+
+        .game-info {
+            display: flex;
+            justify-content: space-between;
+            background: linear-gradient(145deg, #f5f5f5, #e8e8ed);
+            padding: 12px 15px;
+            border-radius: 15px;
+            font-size: 14px;
+            gap: 10px;
+            flex-wrap: wrap;
+            box-shadow: inset 4px 4px 8px rgba(163, 177, 198, 0.3), inset -4px -4px 8px rgba(255, 255, 255, 0.5);
+        }
+
+        .difficulty-label {
+            background: linear-gradient(145deg, #e8e8ed, #d8d8dd);
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-weight: 500;
+            box-shadow: 3px 3px 6px rgba(163, 177, 198, 0.4), -3px -3px 6px rgba(255, 255, 255, 0.5);
+        }
+
+        .timer {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .pause-btn {
+            background: linear-gradient(145deg, #a8daff, #7cc8ff);
+            color: #1565c0;
+            border: none;
+            border-radius: 8px;
+            padding: 3px 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+            box-shadow: 3px 3px 6px rgba(163, 177, 198, 0.4), -3px -3px 6px rgba(255, 255, 255, 0.5);
+        }
+
+        .pause-btn:hover {
+            box-shadow: 2px 2px 4px rgba(163, 177, 198, 0.4), -2px -2px 4px rgba(255, 255, 255, 0.5);
+        }
+
+        .pause-btn.paused {
+            background: linear-gradient(145deg, #a8e6cf, #7cd9b8);
+            color: #2d6a4f;
+        }
+
+        .hints {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .best-times {
+            background: linear-gradient(145deg, #ffe8f0, #ffdde8);
+            border: none;
+            border-radius: 15px;
+            padding: 10px 15px;
+            margin-bottom: 15px;
+            box-shadow: 10px 10px 20px rgba(220, 180, 200, 0.5), -10px -10px 20px rgba(255, 255, 255, 0.8);
+        }
+
+        .best-times h3 {
+            font-size: 14px;
+            color: #333;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .best-times-list {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .best-time-item {
+            font-size: 13px;
+            color: #333;
+            display: flex;
+            justify-content: space-between;
+            padding: 3px 0;
+        }
+
+        .best-time-rank {
+            font-weight: bold;
+            color: #333;
+        }
+
+        .best-time-value {
+            font-weight: 500;
+            color: #333;
+        }
+
+        .no-records {
+            font-size: 12px;
+            color: #999;
+            font-style: italic;
+        }
+
+        /* 数字選択ボタン */
+        .number-buttons {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .number-btn {
+            padding: 15px;
+            border: none;
+            border-radius: 15px;
+            background: linear-gradient(145deg, #a8daff, #7cc8ff);
+            color: #1565c0;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 6px 6px 12px rgba(163, 177, 198, 0.4), -6px -6px 12px rgba(255, 255, 255, 0.5);
+        }
+
+        .number-btn:hover {
+            box-shadow: 4px 4px 8px rgba(163, 177, 198, 0.4), -4px -4px 8px rgba(255, 255, 255, 0.5);
+        }
+
+        .number-btn.selected {
+            box-shadow: inset 4px 4px 8px rgba(163, 177, 198, 0.6), inset -4px -4px 8px rgba(255, 255, 255, 0.5);
+        }
+
+        .erase-btn {
+            background: linear-gradient(145deg, #e8e8ed, #d8d8dd);
+            color: #666;
+        }
+
+        .erase-btn:hover {
+            box-shadow: 4px 4px 8px rgba(163, 177, 198, 0.4), -4px -4px 8px rgba(255, 255, 255, 0.5);
+        }
+
+        .instruction {
+            text-align: center;
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 15px;
+        }
+
+        /* 数独グリッド */
+        .sudoku-grid {
+            display: grid;
+            grid-template-columns: repeat(9, 1fr);
+            gap: 1px;
+            width: 100%;
+            max-width: 450px;
+            margin: 0 auto 20px;
+            border-radius: 15px;
+            padding: 10px;
+            background: linear-gradient(145deg, #e8e8ed, #d8d8dd);
+            aspect-ratio: 1;
+            box-shadow: inset 6px 6px 12px rgba(163, 177, 198, 0.4), inset -6px -6px 12px rgba(255, 255, 255, 0.5);
+        }
+
+        .cell {
+            aspect-ratio: 1;
+            border: 1px solid rgba(163, 177, 198, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            font-weight: bold;
+            background: linear-gradient(145deg, #ffffff, #f5f5fa);
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+            border-radius: 8px;
+            box-shadow: 3px 3px 6px rgba(163, 177, 198, 0.3), -3px -3px 6px rgba(255, 255, 255, 0.5);
+        }
+
+        /* 3x3ブロックの境界を太くする */
+        .cell:nth-child(9n+3),
+        .cell:nth-child(9n+6) {
+            border-right: 4px solid #666666;
+        }
+
+        .cell:nth-child(n+19):nth-child(-n+27),
+        .cell:nth-child(n+46):nth-child(-n+54) {
+            border-bottom: 4px solid #666666;
+        }
+
+        .cell.fixed {
+            background: linear-gradient(145deg, #e8e8ed, #d8d8dd);
+            color: #555;
+        }
+
+        .cell.selected {
+            background: linear-gradient(145deg, #e3f2fd, #b3e0ff);
+            box-shadow: inset 3px 3px 6px rgba(33, 150, 243, 0.3), inset -3px -3px 6px rgba(255, 255, 255, 0.5);
+        }
+
+        .cell.user-input {
+            color: #2196F3;
+        }
+
+        .cell.incorrect {
+            color: #F44336;
+        }
+
+        .cell:hover:not(.fixed) {
+            box-shadow: 2px 2px 4px rgba(163, 177, 198, 0.3), -2px -2px 4px rgba(255, 255, 255, 0.5);
+        }
+
+        /* アクションボタン */
+        .action-buttons {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+        .action-btn {
+            padding: 15px 20px;
+            border: none;
+            border-radius: 15px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 6px 6px 12px rgba(163, 177, 198, 0.4), -6px -6px 12px rgba(255, 255, 255, 0.5);
+        }
+
+        .hint-btn {
+            background: linear-gradient(145deg, #d4a5ff, #c48aff);
+            color: #6a1b9a;
+        }
+
+        .hint-btn:hover {
+            box-shadow: 4px 4px 8px rgba(163, 177, 198, 0.4), -4px -4px 8px rgba(255, 255, 255, 0.5);
+        }
+
+        .check-btn {
+            background: linear-gradient(145deg, #ffd1a8, #ffb87c);
+            color: #e65100;
+        }
+
+        .check-btn:hover {
+            box-shadow: 4px 4px 8px rgba(163, 177, 198, 0.4), -4px -4px 8px rgba(255, 255, 255, 0.5);
+        }
+
+        .new-btn {
+            background: linear-gradient(145deg, #a8daff, #7cc8ff);
+            color: #1565c0;
+        }
+
+        .new-btn:hover {
+            box-shadow: 4px 4px 8px rgba(163, 177, 198, 0.4), -4px -4px 8px rgba(255, 255, 255, 0.5);
+        }
+
+        .quit-btn {
+            background: linear-gradient(145deg, #ffb3ba, #ff8a8a);
+            color: #c62828;
+        }
+
+        .quit-btn:hover {
+            box-shadow: 4px 4px 8px rgba(163, 177, 198, 0.4), -4px -4px 8px rgba(255, 255, 255, 0.5);
+        }
+
+        .action-btn:active {
+            box-shadow: inset 4px 4px 8px rgba(163, 177, 198, 0.6), inset -4px -4px 8px rgba(255, 255, 255, 0.5);
+        }
+
+        /* レスポンシブ対応 */
+        @media (max-width: 600px) {
+            .game-container,
+            .difficulty-container {
+                padding: 15px;
+            }
+
+            .difficulty-btn {
+                padding: 25px 15px;
+                font-size: 20px;
+            }
+
+            .number-btn {
+                padding: 12px;
+                font-size: 16px;
+            }
+
+            .cell {
+                font-size: 16px;
+            }
+
+            .action-btn {
+                padding: 12px 15px;
+                font-size: 14px;
+            }
+        }
+
+        @media (max-width: 400px) {
+            .game-info {
+                font-size: 12px;
+            }
+
+            .number-buttons {
+                gap: 5px;
+            }
+
+            .number-btn {
+                padding: 10px;
+                font-size: 14px;
+            }
+
+            .cell {
+                font-size: 14px;
+            }
+        }
+
+        /* 紙吹雪アニメーション */
+        .confetti {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            background-color: #f0f;
+            position: absolute;
+            animation: confetti-fall linear forwards;
+            z-index: 1000;
+        }
+
+        @keyframes confetti-fall {
+            to {
+                transform: translateY(100vh) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        /* グリッド光るアニメーション - ピンクスパーク */
+        .sudoku-grid.celebration {
+            animation: grid-glow-pink 2s ease-in-out 4;
+        }
+
+        @keyframes grid-glow-pink {
+            0%, 100% {
+                box-shadow: inset 6px 6px 12px rgba(163, 177, 198, 0.4), inset -6px -6px 12px rgba(255, 255, 255, 0.5);
+            }
+            25% {
+                box-shadow: 0 0 40px rgba(255, 105, 180, 0.9), 0 0 80px rgba(255, 182, 193, 0.7), inset 0 0 30px rgba(255, 192, 203, 0.6);
+            }
+            50% {
+                box-shadow: 0 0 50px rgba(255, 20, 147, 1), 0 0 100px rgba(255, 105, 180, 0.8), inset 0 0 40px rgba(255, 182, 193, 0.7);
+            }
+            75% {
+                box-shadow: 0 0 40px rgba(255, 105, 180, 0.9), 0 0 80px rgba(255, 182, 193, 0.7), inset 0 0 30px rgba(255, 192, 203, 0.6);
+            }
+        }
+
+        /* セルが光るアニメーション - ピンクスパーク */
+        .cell.celebration {
+            animation: cell-glow-pink 2s ease-in-out 4;
+        }
+
+        @keyframes cell-glow-pink {
+            0%, 100% {
+                box-shadow: 3px 3px 6px rgba(163, 177, 198, 0.3), -3px -3px 6px rgba(255, 255, 255, 0.5);
+            }
+            25% {
+                box-shadow: 0 0 20px rgba(255, 105, 180, 0.95), 0 0 35px rgba(255, 182, 193, 0.75);
+                transform: scale(1.03);
+            }
+            50% {
+                box-shadow: 0 0 25px rgba(255, 20, 147, 1), 0 0 45px rgba(255, 105, 180, 0.9);
+                transform: scale(1.08);
+            }
+            75% {
+                box-shadow: 0 0 20px rgba(255, 105, 180, 0.95), 0 0 35px rgba(255, 182, 193, 0.75);
+                transform: scale(1.03);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 難易度選択画面 -->
+    <div id="difficultyScreen" class="screen">
+        <div class="difficulty-container">
+            <div class="title-area">
+                <div class="icon">🎯</div>
+                <h1>数独パズル</h1>
+                <p class="subtitle">難易度を選択してください</p>
+            </div>
+
+            <div class="difficulty-buttons">
+                <button class="difficulty-btn beginner" data-difficulty="beginner">入門</button>
+                <button class="difficulty-btn easy" data-difficulty="easy">初級</button>
+                <button class="difficulty-btn medium" data-difficulty="medium">中級</button>
+                <button class="difficulty-btn hard" data-difficulty="hard">上級</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ゲーム画面 -->
+    <div id="gameScreen" class="screen hidden">
+        <div class="game-container">
+            <div class="game-header">
+                <div class="icon-title">
+                    <div class="icon-small">🎯</div>
+                    <h1>数独パズル</h1>
+                </div>
+
+                <div class="game-info">
+                    <div class="difficulty-label">難易度: <span id="currentDifficulty">入門</span></div>
+                    <div class="timer">
+                        ⏱ <span id="timer">00:00</span>
+                        <button id="pauseBtn" class="pause-btn">⏸</button>
+                    </div>
+                    <div class="hints">💡 ヒント: <span id="hintCount">3</span>回</div>
+                </div>
+
+                <!-- ベストタイム表示 -->
+                <div class="best-times">
+                    <h3>🏆 ベストタイム TOP3</h3>
+                    <div id="bestTimesList" class="best-times-list">
+                        <div class="no-records">まだ記録がありません</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 数字選択ボタン -->
+            <div class="number-buttons">
+                <button class="number-btn" data-number="1">1</button>
+                <button class="number-btn" data-number="2">2</button>
+                <button class="number-btn" data-number="3">3</button>
+                <button class="number-btn" data-number="4">4</button>
+                <button class="number-btn" data-number="5">5</button>
+                <button class="number-btn" data-number="6">6</button>
+                <button class="number-btn" data-number="7">7</button>
+                <button class="number-btn" data-number="8">8</button>
+                <button class="number-btn" data-number="9">9</button>
+                <button class="number-btn erase-btn">消す</button>
+            </div>
+
+            <p class="instruction">マスをタップして選択してください</p>
+
+            <!-- 数独グリッド -->
+            <div id="sudokuGrid" class="sudoku-grid"></div>
+
+            <!-- アクションボタン -->
+            <div class="action-buttons">
+                <button id="hintBtn" class="action-btn hint-btn">💡 ヒント</button>
+                <button id="checkBtn" class="action-btn check-btn">答えを見る</button>
+                <button id="newGameBtn" class="action-btn new-btn">新しい問題</button>
+                <button id="quitBtn" class="action-btn quit-btn">やめる</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 数独ゲームのメインロジック
+        class SudokuGame {
+            constructor() {
+                this.grid = Array(9).fill(null).map(() => Array(9).fill(0));
+                this.solution = Array(9).fill(null).map(() => Array(9).fill(0));
+                this.difficulty = 'beginner';
+                this.selectedNumber = null;
+                this.selectedCell = null;
+                this.hintsRemaining = 3;
+                this.timerInterval = null;
+                this.startTime = null;
+                this.elapsedSeconds = 0;
+                this.isPaused = false;
+
+                this.init();
+            }
+
+            init() {
+                this.setupDifficultyScreen();
+                this.loadBestTimes();
+            }
+
+            // ベストタイムをローカルストレージから読み込み
+            loadBestTimes() {
+                const saved = localStorage.getItem('sudokuBestTimes');
+                if (saved) {
+                    this.bestTimes = JSON.parse(saved);
+                } else {
+                    this.bestTimes = {
+                        'beginner': [],
+                        'easy': [],
+                        'medium': [],
+                        'hard': []
+                    };
+                }
+            }
+
+            // ベストタイムを保存
+            saveBestTimes() {
+                localStorage.setItem('sudokuBestTimes', JSON.stringify(this.bestTimes));
+            }
+
+            // ベストタイムを更新
+            updateBestTimes(seconds) {
+                const times = this.bestTimes[this.difficulty];
+                times.push(seconds);
+                times.sort((a, b) => a - b);
+
+                // TOP3のみ保持
+                this.bestTimes[this.difficulty] = times.slice(0, 3);
+                this.saveBestTimes();
+                this.displayBestTimes();
+            }
+
+            // ベストタイムを表示
+            displayBestTimes() {
+                const listElement = document.getElementById('bestTimesList');
+                const times = this.bestTimes[this.difficulty];
+
+                if (times.length === 0) {
+                    listElement.innerHTML = '<div class="no-records">まだ記録がありません</div>';
+                    return;
+                }
+
+                listElement.innerHTML = times.map((seconds, index) => {
+                    const minutes = Math.floor(seconds / 60);
+                    const secs = seconds % 60;
+                    const timeStr = `${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+                    const medals = ['🥇', '🥈', '🥉'];
+
+                    return `
+                        <div class="best-time-item">
+                            <span class="best-time-rank">${medals[index]} ${index + 1}位</span>
+                            <span class="best-time-value">${timeStr}</span>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            setupDifficultyScreen() {
+                const difficultyButtons = document.querySelectorAll('.difficulty-btn');
+                difficultyButtons.forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        this.difficulty = e.target.dataset.difficulty;
+                        this.startGame();
+                    });
+                });
+            }
+
+            startGame() {
+                // 画面切り替え
+                document.getElementById('difficultyScreen').classList.add('hidden');
+                document.getElementById('gameScreen').classList.remove('hidden');
+
+                // 難易度表示を更新
+                const difficultyNames = {
+                    'beginner': '入門',
+                    'easy': '初級',
+                    'medium': '中級',
+                    'hard': '上級'
+                };
+                document.getElementById('currentDifficulty').textContent = difficultyNames[this.difficulty];
+
+                // ヒント回数をリセット
+                this.hintsRemaining = 3;
+                document.getElementById('hintCount').textContent = this.hintsRemaining;
+
+                // イベントリスナーを設定
+                this.setupEventListeners();
+
+                // ゲーム生成
+                this.generateNewGame();
+
+                // タイマー開始
+                this.startTimer();
+
+                // ベストタイムを表示
+                this.displayBestTimes();
+            }
+
+            setupEventListeners() {
+                // 数字選択ボタン
+                document.querySelectorAll('.number-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        // セルが選択されていない場合は何もしない
+                        if (!this.selectedCell) {
+                            return;
+                        }
+
+                        if (e.target.classList.contains('erase-btn')) {
+                            this.selectedNumber = 0;
+                        } else {
+                            this.selectedNumber = parseInt(e.target.dataset.number);
+                        }
+
+                        // 選択されたセルに数字を入力
+                        this.inputNumber(this.selectedCell);
+
+                        // 数字ボタンの選択状態をリセット
+                        this.selectedNumber = null;
+                    });
+                });
+
+                // アクションボタン
+                document.getElementById('hintBtn').addEventListener('click', () => this.showHint());
+                document.getElementById('checkBtn').addEventListener('click', () => this.showSolution());
+                document.getElementById('newGameBtn').addEventListener('click', () => this.generateNewGame());
+                document.getElementById('quitBtn').addEventListener('click', () => this.quitGame());
+                document.getElementById('pauseBtn').addEventListener('click', () => this.togglePause());
+            }
+
+            startTimer() {
+                this.startTime = Date.now();
+                this.elapsedSeconds = 0;
+                this.isPaused = false;
+
+                if (this.timerInterval) {
+                    clearInterval(this.timerInterval);
+                }
+
+                this.timerInterval = setInterval(() => {
+                    if (!this.isPaused) {
+                        this.elapsedSeconds = Math.floor((Date.now() - this.startTime) / 1000);
+                        const minutes = Math.floor(this.elapsedSeconds / 60);
+                        const seconds = this.elapsedSeconds % 60;
+                        document.getElementById('timer').textContent =
+                            `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+                    }
+                }, 1000);
+            }
+
+            stopTimer() {
+                if (this.timerInterval) {
+                    clearInterval(this.timerInterval);
+                    this.timerInterval = null;
+                }
+            }
+
+            togglePause() {
+                const pauseBtn = document.getElementById('pauseBtn');
+                const gridElement = document.getElementById('sudokuGrid');
+
+                this.isPaused = !this.isPaused;
+
+                if (this.isPaused) {
+                    pauseBtn.textContent = '▶';
+                    pauseBtn.classList.add('paused');
+                    gridElement.style.filter = 'blur(8px)';
+                    gridElement.style.pointerEvents = 'none';
+
+                    // 一時停止時刻を記録
+                    this.pausedTime = Date.now();
+                } else {
+                    pauseBtn.textContent = '⏸';
+                    pauseBtn.classList.remove('paused');
+                    gridElement.style.filter = 'none';
+                    gridElement.style.pointerEvents = 'auto';
+
+                    // タイマーを調整（一時停止していた時間を考慮）
+                    const pausedDuration = Math.floor((Date.now() - this.pausedTime) / 1000);
+                    this.startTime += pausedDuration * 1000;
+                }
+            }
+
+            // 完全な数独を生成
+            generateCompleteSudoku() {
+                this.solution = Array(9).fill(null).map(() => Array(9).fill(0));
+                this.solveSudoku(this.solution, true);
+            }
+
+            // バックトラッキングアルゴリズムで数独を解く
+            solveSudoku(board, randomize = false) {
+                const empty = this.findEmpty(board);
+                if (!empty) {
+                    return true;
+                }
+
+                const [row, col] = empty;
+                const numbers = randomize ? this.shuffleArray([1, 2, 3, 4, 5, 6, 7, 8, 9]) : [1, 2, 3, 4, 5, 6, 7, 8, 9];
+
+                for (let num of numbers) {
+                    if (this.isValid(board, row, col, num)) {
+                        board[row][col] = num;
+
+                        if (this.solveSudoku(board, randomize)) {
+                            return true;
+                        }
+
+                        board[row][col] = 0;
+                    }
+                }
+
+                return false;
+            }
+
+            findEmpty(board) {
+                for (let i = 0; i < 9; i++) {
+                    for (let j = 0; j < 9; j++) {
+                        if (board[i][j] === 0) {
+                            return [i, j];
+                        }
+                    }
+                }
+                return null;
+            }
+
+            shuffleArray(array) {
+                const newArray = [...array];
+                for (let i = newArray.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+                }
+                return newArray;
+            }
+
+            isValid(board, row, col, num) {
+                // 行のチェック
+                for (let x = 0; x < 9; x++) {
+                    if (board[row][x] === num) {
+                        return false;
+                    }
+                }
+
+                // 列のチェック
+                for (let x = 0; x < 9; x++) {
+                    if (board[x][col] === num) {
+                        return false;
+                    }
+                }
+
+                // 3x3ブロックのチェック
+                const startRow = Math.floor(row / 3) * 3;
+                const startCol = Math.floor(col / 3) * 3;
+                for (let i = 0; i < 3; i++) {
+                    for (let j = 0; j < 3; j++) {
+                        if (board[startRow + i][startCol + j] === num) {
+                            return false;
+                        }
+                    }
+                }
+
+                return true;
+            }
+
+            // 難易度に応じてセルを削除
+            removeNumbers() {
+                const cellsToRemove = {
+                    'beginner': 20,
+                    'easy': 35,
+                    'medium': 45,
+                    'hard': 55
+                };
+
+                const removeCount = cellsToRemove[this.difficulty];
+                this.grid = this.solution.map(row => [...row]);
+
+                let removed = 0;
+                while (removed < removeCount) {
+                    const row = Math.floor(Math.random() * 9);
+                    const col = Math.floor(Math.random() * 9);
+
+                    if (this.grid[row][col] !== 0) {
+                        this.grid[row][col] = 0;
+                        removed++;
+                    }
+                }
+            }
+
+            // 新しいゲームを生成
+            generateNewGame() {
+                this.generateCompleteSudoku();
+                this.removeNumbers();
+                this.renderGrid();
+                this.selectedNumber = null;
+                this.selectedCell = null;
+
+                // 数字ボタンの選択をリセット
+                document.querySelectorAll('.number-btn').forEach(btn => btn.classList.remove('selected'));
+
+                // タイマーをリセット
+                this.startTimer();
+            }
+
+            // グリッドをHTMLに描画
+            renderGrid() {
+                const gridElement = document.getElementById('sudokuGrid');
+                gridElement.innerHTML = '';
+
+                for (let i = 0; i < 9; i++) {
+                    for (let j = 0; j < 9; j++) {
+                        const cell = document.createElement('div');
+                        cell.className = 'cell';
+                        cell.dataset.row = i;
+                        cell.dataset.col = j;
+
+                        if (this.grid[i][j] !== 0) {
+                            cell.textContent = this.grid[i][j];
+                            cell.classList.add('fixed');
+                        } else {
+                            cell.addEventListener('click', (e) => {
+                                this.selectCell(e.target);
+                            });
+                        }
+
+                        gridElement.appendChild(cell);
+                    }
+                }
+            }
+
+            // セルを選択
+            selectCell(cell) {
+                // 前の選択を解除
+                if (this.selectedCell) {
+                    this.selectedCell.classList.remove('selected');
+                }
+
+                // 新しいセルを選択
+                this.selectedCell = cell;
+                cell.classList.add('selected');
+            }
+
+            // 数字を入力
+            inputNumber(cell) {
+                if (cell.classList.contains('fixed')) {
+                    return;
+                }
+
+                const row = parseInt(cell.dataset.row);
+                const col = parseInt(cell.dataset.col);
+
+                if (this.selectedNumber === 0) {
+                    // 消去
+                    cell.textContent = '';
+                    cell.classList.remove('user-input', 'incorrect');
+                    this.grid[row][col] = 0;
+                } else {
+                    // 入力
+                    cell.textContent = this.selectedNumber;
+                    cell.classList.add('user-input');
+                    this.grid[row][col] = this.selectedNumber;
+
+                    // 正誤チェック
+                    if (this.selectedNumber !== this.solution[row][col]) {
+                        cell.classList.add('incorrect');
+                        cell.classList.remove('user-input');
+                    } else {
+                        cell.classList.remove('incorrect');
+                        cell.classList.add('user-input');
+                    }
+
+                    // 完成チェック
+                    this.checkCompletion();
+                }
+            }
+
+            // 完成チェック
+            checkCompletion() {
+                let isComplete = true;
+                let isCorrect = true;
+
+                for (let i = 0; i < 9; i++) {
+                    for (let j = 0; j < 9; j++) {
+                        if (this.grid[i][j] === 0) {
+                            isComplete = false;
+                        }
+                        if (this.grid[i][j] !== this.solution[i][j]) {
+                            isCorrect = false;
+                        }
+                    }
+                }
+
+                if (isComplete && isCorrect) {
+                    this.stopTimer();
+                    const minutes = Math.floor(this.elapsedSeconds / 60);
+                    const seconds = this.elapsedSeconds % 60;
+
+                    // お祝い演出を開始
+                    this.celebrate();
+
+                    // ベストタイムを更新
+                    this.updateBestTimes(this.elapsedSeconds);
+
+                    // ランキング判定
+                    const times = this.bestTimes[this.difficulty];
+                    const rank = times.indexOf(this.elapsedSeconds) + 1;
+                    let rankMessage = '';
+                    if (rank === 1) {
+                        rankMessage = '\n🥇 新記録！1位です！';
+                    } else if (rank === 2) {
+                        rankMessage = '\n🥈 2位にランクイン！';
+                    } else if (rank === 3) {
+                        rankMessage = '\n🥉 3位にランクイン！';
+                    }
+
+                    setTimeout(() => {
+                        alert(`おめでとうございます！クリアしました！\n\nタイム: ${minutes}分${seconds}秒${rankMessage}`);
+                    }, 2000);
+                }
+            }
+
+            // お祝い演出
+            celebrate() {
+                // グリッドを光らせる
+                const gridElement = document.getElementById('sudokuGrid');
+                gridElement.classList.add('celebration');
+
+                // 全セルを光らせる
+                const cells = document.querySelectorAll('.cell');
+                cells.forEach(cell => {
+                    cell.classList.add('celebration');
+                });
+
+                // 紙吹雪を降らせる
+                this.createConfetti();
+
+                // 5秒後にアニメーションクラスを削除
+                setTimeout(() => {
+                    gridElement.classList.remove('celebration');
+                    cells.forEach(cell => {
+                        cell.classList.remove('celebration');
+                    });
+                }, 5000);
+            }
+
+            // 紙吹雪を生成
+            createConfetti() {
+                const colors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#f9ca24', '#6c5ce7', '#fd79a8', '#fdcb6e', '#e17055'];
+                const confettiCount = 150;
+
+                for (let i = 0; i < confettiCount; i++) {
+                    setTimeout(() => {
+                        const confetti = document.createElement('div');
+                        confetti.className = 'confetti';
+                        confetti.style.left = Math.random() * window.innerWidth + 'px';
+                        confetti.style.top = '-10px';
+                        confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                        confetti.style.width = (Math.random() * 10 + 5) + 'px';
+                        confetti.style.height = (Math.random() * 10 + 5) + 'px';
+                        confetti.style.opacity = Math.random() * 0.7 + 0.3;
+                        confetti.style.animationDuration = (Math.random() * 3 + 2) + 's';
+                        confetti.style.animationDelay = '0s';
+
+                        document.body.appendChild(confetti);
+
+                        // アニメーション終了後に削除
+                        setTimeout(() => {
+                            confetti.remove();
+                        }, 5000);
+                    }, i * 30);
+                }
+            }
+
+            // ヒントを表示
+            showHint() {
+                if (this.hintsRemaining <= 0) {
+                    alert('ヒントの回数を使い切りました。');
+                    return;
+                }
+
+                // 空のセルをランダムに選んで答えを表示
+                const emptyCells = [];
+                const cells = document.querySelectorAll('.cell');
+
+                cells.forEach(cell => {
+                    if (!cell.classList.contains('fixed') && !cell.textContent) {
+                        emptyCells.push(cell);
+                    }
+                });
+
+                if (emptyCells.length === 0) {
+                    alert('すべてのマスが埋まっています。');
+                    return;
+                }
+
+                const randomCell = emptyCells[Math.floor(Math.random() * emptyCells.length)];
+                const row = parseInt(randomCell.dataset.row);
+                const col = parseInt(randomCell.dataset.col);
+
+                randomCell.textContent = this.solution[row][col];
+                randomCell.classList.add('fixed');
+                this.grid[row][col] = this.solution[row][col];
+
+                this.hintsRemaining--;
+                document.getElementById('hintCount').textContent = this.hintsRemaining;
+
+                this.checkCompletion();
+            }
+
+            // 答えを表示
+            showSolution() {
+                if (confirm('答えを表示しますか？\n（ゲームは終了します）')) {
+                    this.stopTimer();
+
+                    const cells = document.querySelectorAll('.cell');
+                    cells.forEach(cell => {
+                        const row = parseInt(cell.dataset.row);
+                        const col = parseInt(cell.dataset.col);
+                        cell.textContent = this.solution[row][col];
+                        cell.classList.remove('user-input', 'selected');
+                        cell.classList.add('fixed');
+                    });
+
+                    this.selectedCell = null;
+                    this.selectedNumber = null;
+                    document.querySelectorAll('.number-btn').forEach(btn => btn.classList.remove('selected'));
+                }
+            }
+
+            // ゲームを終了
+            quitGame() {
+                if (confirm('ゲームを終了しますか？')) {
+                    this.stopTimer();
+                    document.getElementById('gameScreen').classList.add('hidden');
+                    document.getElementById('difficultyScreen').classList.remove('hidden');
+
+                    // リセット
+                    this.selectedCell = null;
+                    this.selectedNumber = null;
+                    document.querySelectorAll('.number-btn').forEach(btn => btn.classList.remove('selected'));
+                }
+            }
+        }
+
+        // ゲームを初期化
+        document.addEventListener('DOMContentLoaded', () => {
+            new SudokuGame();
+        });
+    </script>
+</body>
+</html>
